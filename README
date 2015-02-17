@@ -1,0 +1,4 @@
+This file contains a visualisation engine, written in python, for 
+molecular dynamics, using the animation package from matplotlib.
+The file includes a short hoto in the docstring of the __init__ function.
+
