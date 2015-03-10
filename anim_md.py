@@ -2,12 +2,11 @@ import numpy as np
 #plotting
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-# 3D plotting
 from mpl_toolkits import mplot3d
 from mpl_toolkits.mplot3d.art3d import juggle_axes
 
 class AnimatedScatter(object):
-    def __init__(self, numpoints, box_len, pos, mom, part_update, *args):
+    def __init__(self, numpoints, box_len, temp, pos, mom, part_update, *args):
         """
         Class for particle animation
         constructor takes as arguments                                                              
@@ -18,9 +17,9 @@ class AnimatedScatter(object):
         -- part_update: function which calculates the new particle positions
            This function must output the updated arrays pos and mom                      
         -- args: the function part_update takes as arguments numpoints, box_len, pos, mom, *args 
-        Example: anim_md.AnimatedScatter(n, box_len, pos, mom, simulate, n_t, dt)
+        Example: anim_md.AnimatedScatter(n, box_len, pos, simulate, mom, n_t, dt)
         where 'simulate' is defined as
-        def simulate(n, box_len, pos, mom, arglist):
+        def simulate(n, box_len, pos, mom, part_update, args):
           ...
           ...
           return pos, mom
@@ -30,17 +29,18 @@ class AnimatedScatter(object):
         self.mom = mom
         self.box_len = box_len
         self.arglist = args
+        self.temp = temp
         
         self.stream = self.data_stream()
         self.angle = 0
         self.part_update = part_update
-        self.fig = plt.figure(figsize=(16,12))
+        self.fig, self.ax = plt.subplots(figsize=(16,12))
         self.FLOOR = 0.0
         self.CEILING = self.box_len
         self.ax = self.fig.add_subplot(111,projection = '3d')
         self.ani = animation.FuncAnimation(self.fig, self.update, interval=1, 
                                            init_func=self.setup_plot, blit=True)
-
+        
     def change_angle(self):
         """ Change angle for each rotation step """
         self.angle = (self.angle + 1)%360
@@ -57,15 +57,32 @@ class AnimatedScatter(object):
 
         return self.scat,
 
+    def dens_update(self,density):
+        print ("hallo jos")
+        old_dens = self.numpoints/self.box_len**3
+        scale = (old_dens/density)**0.3333333333
+        self.box_len = scale*self.box_len
+        self.pos = self.pos*scale
+        self.FLOOR = 0.0
+        self.CEILING = self.box_len
+        self.ax.set_xlim3d(self.FLOOR, self.CEILING)
+        self.ax.set_ylim3d(self.FLOOR, self.CEILING)
+        self.ax.set_zlim3d(self.FLOOR, self.CEILING)
+
+    
+    def temp_update(self,temp):
+        self.temp = temp
+#        print ("hoho", old_dens, density, scale, self.box_len)
+
     def data_stream(self):
         """ 
            Calls particle update routine, copies it to the relevant section of the 'data' array which 
            is then yielded
         """
-        self.pos, self.outlist = self.part_update(self.numpoints, self.box_len, self.pos, self.mom, *self.arglist)
+        self.pos, self.outlist = self.part_update(self.numpoints, self.box_len, self.temp, self.pos, self.mom, *self.arglist)
         data = np.transpose(self.pos)
         while True:
-            self.pos, self.mom = self.part_update(self.numpoints, self.box_len, self.pos, self.mom, *self.arglist)
+            self.pos, self.mom = self.part_update(self.numpoints, self.box_len, self.temp, self.pos, self.mom, *self.arglist)
             data[:3, :] = np.transpose(self.pos)
             yield data
 
@@ -79,6 +96,7 @@ class AnimatedScatter(object):
         self.ax.view_init(30,self.angle)
         plt.draw()
         return self.scat,
+
 
     def show(self):
         plt.show()
