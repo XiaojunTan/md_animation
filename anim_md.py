@@ -18,7 +18,7 @@ class AnimatedScatter(object):
         -- part_update: function which calculates the new particle positions
            This function must output the updated arrays pos and mom                      
         -- args: the function part_update takes as arguments numpoints, box_len, pos, mom, *args 
-        Example: anim_md.AnimatedScatter(n, box_len, pos, simulate, mom, n_t, dt)
+        Example: anim_md.AnimatedScatter(n, box_len, pos, mom, simulate, n_t, dt)
         where 'simulate' is defined as
         def simulate(n, box_len, pos, mom, arglist):
           ...
